@@ -560,6 +560,7 @@ class graph {
       // By convention, we set the predecessor to itself.
       report[src].pred = src;
       report[src].state = DISCOVERED;
+      // here we need a priority quoque instead, to push the lowest cost 
       q.push(src);
 
       while(!q.empty()) {
