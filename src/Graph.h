@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 
+using std::priority_queue;
 using std::string;
 using std::vector;
 using std::unordered_map;
@@ -128,8 +129,8 @@ class graph {
     //   with the other vertex.
     struct edge {
       int vertex_id;
-      double weight;
-      double weight2;  // for doubly-weighted graphs
+      double weight; //cost
+      double weight2;  // for doubly-weighted graphs //time
       edge ( int vtx_id=0, double _weight=1.0, double _wt2=1.0) 
         : vertex_id { vtx_id}, weight { _weight}, weight2 {_wt2}
       { }
@@ -190,6 +191,18 @@ class graph {
     unordered_set<string> edges;
 
   public:
+    struct option {
+      double cost;
+      double time;
+      int dest;
+
+     option( double _cost=0.0, double _time=0.0, int _dest=-1)//todo
+        : cost { _cost }, time { _time }, dest { _dest }
+      { }
+  
+    };
+
+
 
     // this struct is used for capturing the results of an operation.
     // typically a "report" will be a vector of vertex_labels indexed
@@ -523,8 +536,23 @@ class graph {
       }
     }
 
-
   public:
+
+  bool cpath(int src, std::vector<std::vector<option>> &report) {
+    int u, v;
+    std::priority_queue<option> pq;
+
+    if(src < 0 || src >= num_nodes())
+        return false;
+  
+    report[src].push_back(option(0.0, 0.0, -1));
+
+  }
+  
+  void example(){
+    std::vector<std::vector<option>> report(num_nodes());
+    cpath(2, report);
+  }
     /*
      * TODO 10 points
      *
@@ -560,7 +588,6 @@ class graph {
       // By convention, we set the predecessor to itself.
       report[src].pred = src;
       report[src].state = DISCOVERED;
-      // for project algorithm we need a priority quoque instead, to push the lowest cost 
       q.push(src);
 
       while(!q.empty()) {
