@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -7,7 +6,6 @@
 #include <sstream>
 #include <fstream>
 
-using std::priority_queue;
 using std::string;
 using std::vector;
 using std::unordered_map;
@@ -129,8 +127,8 @@ class graph {
     //   with the other vertex.
     struct edge {
       int vertex_id;
-      double weight; //cost
-      double weight2;  // for doubly-weighted graphs //time
+      double weight;
+      double weight2;  // for doubly-weighted graphs
       edge ( int vtx_id=0, double _weight=1.0, double _wt2=1.0) 
         : vertex_id { vtx_id}, weight { _weight}, weight2 {_wt2}
       { }
@@ -148,6 +146,8 @@ class graph {
         : id { _id }, name { _name } 
       { }
     };
+
+
 
     /**************************************************
     *   Data members of the Graph class here!
@@ -201,8 +201,6 @@ class graph {
       { }
   
     };
-
-
 
     // this struct is used for capturing the results of an operation.
     // typically a "report" will be a vector of vertex_labels indexed
@@ -536,77 +534,78 @@ class graph {
       }
     }
 
+
   public:
 
-  bool _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
-    int u, v;
+    void _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
+      int u, v;
 
-    auto compare = [](option lhs, option rhs)
-                {
-                    if(lhs.cost > rhs.cost){
-                      return rhs;
-                    }
-                    else if(rhs.cost > lhs.cost){
-                      return lhs;
-                    }
-                    else{
-                      if(rhs.time < lhs.time){
-                        return rhs;
+      auto compare = [](option& lhs, option& rhs)
+                  {
+                      if(lhs.cost < rhs.cost){
+                        return true;
+                      }
+                      else if(!lhs.cost < rhs.cost){
+                        return false;
                       }
                       else{
-                        return lhs;
+                        if(lhs.time < rhs.time){
+                          return true;
+                        }
+                        else{
+                          return false;
+                        }
                       }
-                    }
-                };
+                  };
+                
+      std::priority_queue<option, std::vector<option>, decltype(compare)> pq(compare);
+      std::queue<int> vertQ;
+      option opt;
+      option minVal;
+      double prevCost = 0.0;
+      double prevTime = 0.0;
 
-    std::priority_queue<option, std::vector<option>, decltype(compare)> pq(compare);
-    std::queue<int> vertQ;
-    option opt;
-    option minVal;
-    double prevCost = 0.0;
-    double prevTime = 0.0;
+      if(src < 0 || src >= num_nodes())
+          return;
 
-    if(src < 0 || src >= num_nodes())
-        return false;
+      option source = option(0.0, 0.0, src);
+      report[src].push_back(source);
+      pq.push(source);
+      vertQ.push(src);
 
-    option source = option(0.0, 0.0, src);
-    report[src].push_back(source);
-    pq.push(source);
-    vertQ.push(src);
+      while(!vertQ.empty()){
+        u = vertQ.front();
+        vertQ.pop();
 
-    while(!vertQ.empty()){
-      u = vertQ.front();
-      vertQ.pop();
-
-      for(edge &e : vertices[u].outgoing){
-        v = e.vertex_id;
-        pathReport[v].push_back(u);
-        prevCost += e.weight;
-        prevTime += e.weight2;
-        opt = option(prevCost, prevTime, e.vertex_id);
-        pq.push(opt);
-        vertQ.push(v);
+        for(edge &e : vertices[u].outgoing){
+          v = e.vertex_id;
+          pathReport[v].push_back(u);
+          //prevCost += e.weight;
+          //prevTime += e.weight2;
+          opt = option(e.weight, e.weight2, e.vertex_id);
+          pq.push(opt);
+          vertQ.push(v);
+        }
       }
-    }
-    while(!pq.empty()){
-      minVal = pq.top();
-      pq.pop();
-      if(report[minVal.dest].size() == 0){
-        report[minVal.dest].push_back(minVal);
-      }
-      else{
-        int size = report[minVal.dest].size();
-        if(report[minVal.dest][size-1].cost < minVal.cost){
-          if(report[minVal.dest][size-1].time > minVal.time){
-            report[minVal.dest].push_back(minVal);
+      while(!pq.empty()){
+        minVal = pq.top();
+        pq.pop();
+        if(report[minVal.dest].size() == 0){
+          report[minVal.dest].push_back(minVal);
+        }
+        else{
+          int size = report[minVal.dest].size();
+          if(report[minVal.dest][size-1].cost < minVal.cost){
+            if(report[minVal.dest][size-1].time > minVal.time){
+              report[minVal.dest].push_back(minVal);
+            }
           }
         }
       }
+
+      return;
+
     }
-
-    return true;
-
-  }
   
   bool cpath(const string src, std::vector<std::vector<graph::option>> &report, std::vector<std::vector<int>> &pathReport){
     int u;
@@ -614,9 +613,10 @@ class graph {
     if((u=name2id(src)) == -1){
           return false;
     }
-    _cpath(u, report, pathReport);
+    //_cpath(u, report, pathReport);
     return true;
   }
+
     /*
      * TODO 10 points
      *
@@ -773,7 +773,7 @@ class graph {
       return true;
     }
 
-   /* void disp_cpath_report(const vector<vector<option>> cpath_rpt, int src, int dest, double budget, bool print_path=false){
+    /* void disp_cpath_report(const vector<vector<option>> cpath_rpt, int src, int dest, double budget, bool print_path=false){
         int u;
         vector<
     }*/
@@ -889,4 +889,3 @@ class graph {
 
 
 };
-
