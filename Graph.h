@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -8,9 +5,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <fstream>
-#include <bits/stdc++.h>
 
-using std::priority_queue;
 using std::string;
 using std::vector;
 using std::unordered_map;
@@ -132,8 +127,8 @@ class graph {
     //   with the other vertex.
     struct edge {
       int vertex_id;
-      double weight; //cost
-      double weight2;  // for doubly-weighted graphs //time
+      double weight;
+      double weight2;  // for doubly-weighted graphs
       edge ( int vtx_id=0, double _weight=1.0, double _wt2=1.0) 
         : vertex_id { vtx_id}, weight { _weight}, weight2 {_wt2}
       { }
@@ -151,6 +146,8 @@ class graph {
         : id { _id }, name { _name } 
       { }
     };
+
+
 
     /**************************************************
     *   Data members of the Graph class here!
@@ -204,8 +201,6 @@ class graph {
       { }
   
     };
-
-
 
     // this struct is used for capturing the results of an operation.
     // typically a "report" will be a vector of vertex_labels indexed
@@ -490,10 +485,13 @@ class graph {
      *
      * Examples:
          an edge from Chicago to NewYork with weight 201.9:
+
             Chicago NewYork 201.9
  
          an edge from Bob to Alice with no weight:
+
              Bob Alice
+
      * if no weight is specified, the edge defaults to a weight
      *   of 1.0
      */
@@ -536,29 +534,89 @@ class graph {
       }
     }
 
+
   public:
 
-  bool cpath(int src, std::vector<std::vector<option>> &report) {
-    int u, v;
-    // as in the link:
-    //this is what I added but I'm not sure about the syntax 
+    void _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
+      int u, v;
 
-    typedef pair < option.cost , option.time> pq;
-    std::priority_queue<pq , std::vector<pq>,std::greater<pq> pq;
-    
-    
+      auto compare = [](option& lhs, option& rhs)
+                  {
+                      if(lhs.cost < rhs.cost){
+                        return true;
+                      }
+                      else if(!lhs.cost < rhs.cost){
+                        return false;
+                      }
+                      else{
+                        if(lhs.time < rhs.time){
+                          return true;
+                        }
+                        else{
+                          return false;
+                        }
+                      }
+                  };
+                
+      std::priority_queue<option, std::vector<option>, decltype(compare)> pq(compare);
+      std::queue<int> vertQ;
+      option opt;
+      option minVal;
+      double prevCost = 0.0;
+      double prevTime = 0.0;
 
-    if(src < 0 || src >= num_nodes())
-        return false;
+      if(src < 0 || src >= num_nodes())
+          return;
+
+      option source = option(0.0, 0.0, src);
+      report[src].push_back(source);
+      pq.push(source);
+      vertQ.push(src);
+
+      while(!vertQ.empty()){
+        u = vertQ.front();
+        vertQ.pop();
+
+        for(edge &e : vertices[u].outgoing){
+          v = e.vertex_id;
+          pathReport[v].push_back(u);
+          //prevCost += e.weight;
+          //prevTime += e.weight2;
+          opt = option(e.weight, e.weight2, e.vertex_id);
+          pq.push(opt);
+          vertQ.push(v);
+        }
+      }
+      while(!pq.empty()){
+        minVal = pq.top();
+        pq.pop();
+        if(report[minVal.dest].size() == 0){
+          report[minVal.dest].push_back(minVal);
+        }
+        else{
+          int size = report[minVal.dest].size();
+          if(report[minVal.dest][size-1].cost < minVal.cost){
+            if(report[minVal.dest][size-1].time > minVal.time){
+              report[minVal.dest].push_back(minVal);
+            }
+          }
+        }
+      }
+
+      return;
+
+    }
   
-    report[src].push_back(option(0.0, 0.0, -1));
+  bool cpath(const string src, std::vector<std::vector<graph::option>> &report, std::vector<std::vector<int>> &pathReport){
+    int u;
 
+    if((u=name2id(src)) == -1){
+          return false;
+    }
+    _cpath(u, report, pathReport);
+    return true;
   }
-  
-  void example(){
-    std::vector<std::vector<option>> report(num_nodes());
-    cpath(2, report);
-  }
+
     /*
      * TODO 10 points
      *
@@ -715,7 +773,27 @@ class graph {
       return true;
     }
 
+    void disp_cpath_report(const vector<vector<option>> cpath_rpt, const vector<vector<int>> path_rpt, int src, int dest, double budget, bool print_path=false){
+        int u;
+        vector<int> path;
 
+        std::cout << "Weights Length: " << cpath_rpt.size() << "\n\n";
+
+        if(cpath_rpt.size() != num_nodes()){
+          std::cerr << "error - disp_cpath_report(): Weights report vector has incorrect length\n";
+          return;
+        }
+        if(path_rpt.size() != num_nodes()){
+          std::cerr << "error - disp_cpath_report(): Paths report vector has incorrect length\n";
+          return;
+        }
+
+        std::cout << "Destination: " << dest << "\n";
+        for(int i = 0; i<cpath_rpt[dest].size(); i++){
+          std::cout << "(" << cpath_rpt[dest][i].cost << ", " << cpath_rpt[dest][i].time << ")" << "\n";
+        }
+        return;
+    }
 
     void disp_report(const vector<vertex_label> & rpt, 
         bool print_paths=false) {
