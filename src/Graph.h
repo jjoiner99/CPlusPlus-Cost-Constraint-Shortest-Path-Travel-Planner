@@ -538,7 +538,7 @@ class graph {
   public:
 
     bool _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
-      int u, v;
+      int u, v=0;
       std::cout << "Inside 2nd cpath function!" << "\n\n";
 
       auto compare = [](option& lhs, option& rhs)
@@ -575,17 +575,25 @@ class graph {
       while(!pq.empty()){
         temp = pq.top();
         pq.pop();
-        std::cout << "Temp Option: " << temp.cost << " " << temp.time << "\n\n";
+        std::cout << "Temp Option: " << temp.cost << " " << temp.time << " " << temp.dest << "\n\n";
         if( (report[temp.dest].size() == 0) || 
         ( (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) && (report[temp.dest][ (report[temp.dest].size()) - 1].cost < temp.cost))){
           std::cout << "Inside IF STatement" << "\n\n";
           report[temp.dest].push_back(temp);
           pathReport[temp.dest].push_back(temp.dest);
+          
           for(edge &e : vertices[temp.dest].outgoing){
+            std::cout << "Outgoing: " << e.weight << " " << e.weight2 << " " << e.vertex_id << "\n\n";
+          }
+
+          for(edge &e : vertices[temp.dest].outgoing){
+            //std::cout << "outgoing verts: " << e.vertex_id << "\n\n";
+            v = e.vertex_id;
             prevCost = temp.cost;
             prevTime = temp.time;
-            opt = option(e.weight+prevCost, e.weight2+prevTime, e.vertex_id);
+            opt = option(e.weight+prevCost, e.weight2+prevTime, v);
             pq.push(opt);
+
           }
         }
       }
