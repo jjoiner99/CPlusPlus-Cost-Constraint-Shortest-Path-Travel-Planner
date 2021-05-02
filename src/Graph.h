@@ -544,17 +544,17 @@ class graph {
       auto compare = [](option& lhs, option& rhs)
                   {
                       if(lhs.cost < rhs.cost){
-                        return true;
+                        return false;
                       }
                       else if(!lhs.cost < rhs.cost){
-                        return false;
+                        return true;
                       }
                       else{
                         if(lhs.time < rhs.time){
-                          return true;
+                          return false;
                         }
                         else{
-                          return false;
+                          return true;
                         }
                       }
                   };
@@ -570,19 +570,20 @@ class graph {
           return false;
 
       option source = option(0.0, 0.0, src);
-      report[src].push_back(source);
       pq.push(source);
 
       while(!pq.empty()){
         temp = pq.top();
         pq.pop();
+        std::cout << "Temp Option: " << temp.cost << " " << temp.time << "\n\n";
         if( (report[temp.dest].size() == 0) || (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) ){
+          std::cout << "Inside IF STatement" << "\n\n";
+          report[temp.dest].push_back(temp);
+          pathReport[temp.dest].push_back(temp.dest);
           for(edge &e : vertices[temp.dest].outgoing){
-            v = e.vertex_id;
-            pathReport[v].push_back(temp);
-            prevCost += e.weight;
-            prevTime += e.weight2;
-            opt = option(prevCost, prevTime, e.vertex_id);
+            prevCost = temp.cost;
+            prevTime = temp.time;
+            opt = option(e.weight+prevCost, e.weight2+prevTime, e.vertex_id);
             pq.push(opt);
           }
         }
