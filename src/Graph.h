@@ -537,8 +537,9 @@ class graph {
 
   public:
 
-    void _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
+    bool _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
       int u, v;
+      std::cout << "Inside 2nd cpath function!" << "\n\n";
 
       auto compare = [](option& lhs, option& rhs)
                   {
@@ -559,61 +560,47 @@ class graph {
                   };
                 
       std::priority_queue<option, std::vector<option>, decltype(compare)> pq(compare);
-      std::queue<int> vertQ;
       option opt;
+      option temp;
       option minVal;
       double prevCost = 0.0;
       double prevTime = 0.0;
 
       if(src < 0 || src >= num_nodes())
-          return;
+          return false;
 
       option source = option(0.0, 0.0, src);
       report[src].push_back(source);
       pq.push(source);
-      vertQ.push(src);
 
-      while(!vertQ.empty()){
-        u = vertQ.front();
-        vertQ.pop();
-
-        for(edge &e : vertices[u].outgoing){
-          v = e.vertex_id;
-          pathReport[v].push_back(u);
-          //prevCost += e.weight;
-          //prevTime += e.weight2;
-          opt = option(e.weight, e.weight2, e.vertex_id);
-          pq.push(opt);
-          vertQ.push(v);
-        }
-      }
       while(!pq.empty()){
-        minVal = pq.top();
+        temp = pq.top();
         pq.pop();
-        if(report[minVal.dest].size() == 0){
-          report[minVal.dest].push_back(minVal);
-        }
-        else{
-          int size = report[minVal.dest].size();
-          if(report[minVal.dest][size-1].cost < minVal.cost){
-            if(report[minVal.dest][size-1].time > minVal.time){
-              report[minVal.dest].push_back(minVal);
-            }
+        if( (report[temp.dest].size() == 0) || (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) ){
+          for(edge &e : vertices[temp.dest].outgoing){
+            v = e.vertex_id;
+            pathReport[v].push_back(temp);
+            prevCost += e.weight;
+            prevTime += e.weight2;
+            opt = option(prevCost, prevTime, e.vertex_id);
+            pq.push(opt);
           }
         }
       }
-
-      return;
+      
+      std::cout << "End of 2nd cpath function!" << "\n\n";
+      return true;
 
     }
   
   bool cpath(const string src, std::vector<std::vector<graph::option>> &report, std::vector<std::vector<int>> &pathReport){
     int u;
-
+    std::cout << "Inside 1st CPath function!" << "\n\n";
     if((u=name2id(src)) == -1){
           return false;
     }
-    //_cpath(u, report, pathReport);
+    _cpath(u, report, pathReport);
+    std::cout << "END of 1st cpath function!" << "\n\n";
     return true;
   }
 
@@ -773,10 +760,27 @@ class graph {
       return true;
     }
 
-    /* void disp_cpath_report(const vector<vector<option>> cpath_rpt, int src, int dest, double budget, bool print_path=false){
+    void disp_cpath_report(const vector<vector<option>> cpath_rpt, const vector<vector<int>> path_rpt, int src, int dest, double budget, bool print_path=false){
         int u;
-        vector<
-    }*/
+        vector<int> path;
+
+        std::cout << "Weights Length: " << cpath_rpt.size() << "\n\n";
+
+        if(cpath_rpt.size() != num_nodes()){
+          std::cerr << "error - disp_cpath_report(): Weights report vector has incorrect length\n";
+          return;
+        }
+        if(path_rpt.size() != num_nodes()){
+          std::cerr << "error - disp_cpath_report(): Paths report vector has incorrect length\n";
+          return;
+        }
+
+        std::cout << "Destination: " << dest << "\n";
+        for(int i = 0; i<cpath_rpt[dest].size(); i++){
+          std::cout << "(" << cpath_rpt[dest][i].cost << ", " << cpath_rpt[dest][i].time << ")" << "\n";
+        }
+        return;
+    }
 
     void disp_report(const vector<vertex_label> & rpt, 
         bool print_paths=false) {
