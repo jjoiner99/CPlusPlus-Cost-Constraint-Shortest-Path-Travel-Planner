@@ -538,10 +538,12 @@ class graph {
   public:
 
     bool _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
-      int u, v=0;
+      int u; 
+      edge v=0;
       std::cout << "Inside 2nd cpath function!" << "\n\n";
 
-      auto compare = [](option& lhs, option& rhs)
+      //Custom comparator function for priority queue.
+      auto compare = [](option& lhs, option& rhs) 
                   {
                       if(lhs.cost < rhs.cost){
                         return false;
@@ -569,29 +571,30 @@ class graph {
       if(src < 0 || src >= num_nodes())
           return false;
 
-      option source = option(0.0, 0.0, src);
+      option source = option(0.0, 0.0, src); //Push source vertex details into priority queue
       pq.push(source);
 
-      while(!pq.empty()){
+      while(!pq.empty()){ // Loop until priority queue is empty
         temp = pq.top();
-        pq.pop();
+        pq.pop(); //Get least element and pop it.
         std::cout << "Temp Option: " << temp.cost << " " << temp.time << " " << temp.dest << "\n\n";
-        if( (report[temp.dest].size() == 0) || 
+        if( (report[temp.dest].size() == 0) || //Check if the min element is non-dominated, if so, add to heap/report
         ( (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) && (report[temp.dest][ (report[temp.dest].size()) - 1].cost < temp.cost))){
           std::cout << "Inside IF STatement" << "\n\n";
-          report[temp.dest].push_back(temp);
-          pathReport[temp.dest].push_back(temp.dest);
+          report[temp.dest].push_back(temp); //Heap for storing possible path weights
+          pathReport[temp.dest].push_back(temp.dest);//Heap for storing Path itself
           
-          for(edge &e : vertices[temp.dest].outgoing){
-            std::cout << "Outgoing: " << e.weight << " " << e.weight2 << " " << e.vertex_id << "\n\n";
+          for(edge &e : vertices[temp.dest].outgoing){ //For loop we are using to print the outgoing edges for debugging purposes. 
+            v = e;
+            std::cout << "Outgoing: " << v.weight << " " << v.weight2 << " " << v.vertex_id << "\n\n";
           }
-
-          for(edge &e : vertices[temp.dest].outgoing){
+        
+          for(edge &e : vertices[temp.dest].outgoing){ //Expand all edges and add to priority queue.
             //std::cout << "outgoing verts: " << e.vertex_id << "\n\n";
-            v = e.vertex_id;
+            v = e;
             prevCost = temp.cost;
             prevTime = temp.time;
-            opt = option(e.weight+prevCost, e.weight2+prevTime, v);
+            opt = option(v.weight+prevCost, v.weight2+prevTime, v.vertex_id);
             pq.push(opt);
 
           }
@@ -770,7 +773,31 @@ class graph {
       return true;
     }
 
-    void disp_cpath_report(const vector<vector<option>> cpath_rpt, const vector<vector<int>> path_rpt, int src, int dest, double budget, bool print_path=false){
+    //Recursive function to retrace the path for the cpath algorithm
+    bool _findPath(option sol, double leftCost, double leftTime, int dest, int src, vector<int> &Path){
+      
+      for(edge &e : vertices[sol.dest].incoming){ //Examine the incoming edges for the destination, then decrement cost and time variables.
+        leftCost -= e.weight;
+        leftTime -= e.weight2;
+        option opt = option(leftCost, leftTime, e.vertex_id);
+        if((leftCost > 0.0) && (leftTime > 0.0)){//If the cost and time vars are still greater than zero, we still have to backtrack to source
+          Path.push_back(e.vertex_id);
+          if(_findPath(opt, leftCost, leftTime, dest, src, Path) == false){
+            return false;
+          } 
+        }
+        else if( ((leftCost == 0.0) && (leftTime == 0.0)) && (e.vertex_id == src)){//If both vars are 0.0, and the next incoming vertex is the source, we have found the path
+          return true;
+        }
+        else if( ((leftCost < 0.0) || (leftTime < 0.0)) ){//If either vars are negative, this is not the right path, return false
+          return false;
+        }
+      }
+     
+    }
+
+    //Displays the cpath algorithm report
+    void disp_cpath_report(const vector<vector<option>> cpath_rpt, const vector<vector<int>> path_rpt, int src, int dest, double budget){
         int u;
         vector<int> path;
 
@@ -785,10 +812,39 @@ class graph {
           return;
         }
 
-        std::cout << "Destination: " << dest << "\n";
+        std::cout << "Destination: " << dest << "\n\n";
+        std::cout << "Tradeoff Curve:" << "\n";
         for(int i = 0; i<cpath_rpt[dest].size(); i++){
           std::cout << "(" << cpath_rpt[dest][i].cost << ", " << cpath_rpt[dest][i].time << ")" << "\n";
         }
+
+        option solution;
+        bool foundSol = false;
+        for(int j = 0; j<cpath_rpt[dest].size(); j++){
+          if(cpath_rpt[dest][j].cost <= budget){
+            solution = cpath_rpt[dest][j];
+            foundSol = true;
+          }
+          else{
+            break;
+          }
+        }
+
+        if(foundSol == true){
+          std::cout << "Fastest Cost-Feasible Path: " << "(" << solution.cost << ", " << solution.time << ")" << "\n\n";
+          _findPath(solution, solution.cost, solution.time, dest, src, path);
+          std::cout << "Path: " << src << " ";
+          for(int k = path.size()-1; k>=0; k--){
+            std::cout << path[k] << " ";
+          }
+          std::cout << dest;
+        }
+        else{
+          std::cout << "No Cost-Feasible Path for Your Budget!" << "\n\n";
+        }
+
+
+
         return;
     }
 
