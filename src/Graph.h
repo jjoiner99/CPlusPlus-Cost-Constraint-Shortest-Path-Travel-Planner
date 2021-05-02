@@ -576,7 +576,8 @@ class graph {
         temp = pq.top();
         pq.pop();
         std::cout << "Temp Option: " << temp.cost << " " << temp.time << "\n\n";
-        if( (report[temp.dest].size() == 0) || (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) ){
+        if( (report[temp.dest].size() == 0) || 
+        ( (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) && (report[temp.dest][ (report[temp.dest].size()) - 1].cost < temp.cost))){
           std::cout << "Inside IF STatement" << "\n\n";
           report[temp.dest].push_back(temp);
           pathReport[temp.dest].push_back(temp.dest);
