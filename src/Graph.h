@@ -540,7 +540,6 @@ class graph {
     bool _cpath(int src, std::vector<std::vector<option>> &report, std::vector<std::vector<int>> &pathReport) {
       int u; 
       edge v=0;
-      std::cout << "Inside 2nd cpath function!" << "\n\n";
 
       //Custom comparator function for priority queue.
       auto compare = [](option& lhs, option& rhs) 
@@ -577,20 +576,12 @@ class graph {
       while(!pq.empty()){ // Loop until priority queue is empty
         temp = pq.top();
         pq.pop(); //Get least element and pop it.
-        std::cout << "Temp Option: " << temp.cost << " " << temp.time << " " << temp.dest << "\n\n";
         if( (report[temp.dest].size() == 0) || //Check if the min element is non-dominated, if so, add to heap/report
         ( (report[temp.dest][ (report[temp.dest].size()) - 1].time > temp.time) && (report[temp.dest][ (report[temp.dest].size()) - 1].cost < temp.cost))){
-          std::cout << "Inside IF STatement" << "\n\n";
           report[temp.dest].push_back(temp); //Heap for storing possible path weights
           pathReport[temp.dest].push_back(temp.dest);//Heap for storing Path itself
-          
-          for(edge &e : vertices[temp.dest].outgoing){ //For loop we are using to print the outgoing edges for debugging purposes. 
-            v = e;
-            std::cout << "Outgoing: " << v.weight << " " << v.weight2 << " " << v.vertex_id << "\n\n";
-          }
         
           for(edge &e : vertices[temp.dest].outgoing){ //Expand all edges and add to priority queue.
-            //std::cout << "outgoing verts: " << e.vertex_id << "\n\n";
             v = e;
             prevCost = temp.cost;
             prevTime = temp.time;
@@ -601,19 +592,16 @@ class graph {
         }
       }
       
-      std::cout << "End of 2nd cpath function!" << "\n\n";
       return true;
 
     }
   
   bool cpath(const string src, std::vector<std::vector<graph::option>> &report, std::vector<std::vector<int>> &pathReport){
     int u;
-    std::cout << "Inside 1st CPath function!" << "\n\n";
     if((u=name2id(src)) == -1){
           return false;
     }
     _cpath(u, report, pathReport);
-    std::cout << "END of 1st cpath function!" << "\n\n";
     return true;
   }
 
@@ -780,11 +768,21 @@ class graph {
         leftCost -= e.weight;
         leftTime -= e.weight2;
         option opt = option(leftCost, leftTime, e.vertex_id);
-        if((leftCost > 0.0) && (leftTime > 0.0)){//If the cost and time vars are still greater than zero, we still have to backtrack to source
+        if( ((leftCost > 0.0) || (leftTime > 0.0)) && (e.vertex_id != src)){//If the cost and time vars are still greater than zero, we still have to backtrack to source
           Path.push_back(e.vertex_id);
-          if(_findPath(opt, leftCost, leftTime, dest, src, Path) == false){
+          bool truth = _findPath(opt, leftCost, leftTime, dest, src, Path);
+          if(truth == false){
             return false;
           } 
+        }
+        else if( ((leftCost == 0.0) && (leftTime > 0.0)) && (e.vertex_id == src)){//If only one of the two vals is 0 and we have reached source
+          return false;
+        }
+        else if( ((leftCost > 0.0) && (leftTime == 0.0)) && (e.vertex_id == src)){//If only one of the two vals is 0 and we have reached source
+          return false;
+        }
+        else if( ((leftCost == 0.0) && (leftTime == 0.0)) && (e.vertex_id != src)){//If both vals are 0 and we haven't reached source
+          return false;
         }
         else if( ((leftCost == 0.0) && (leftTime == 0.0)) && (e.vertex_id == src)){//If both vars are 0.0, and the next incoming vertex is the source, we have found the path
           return true;
@@ -842,8 +840,6 @@ class graph {
         else{
           std::cout << "No Cost-Feasible Path for Your Budget!" << "\n\n";
         }
-
-
 
         return;
     }
